@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "structs.h"
-#include "arralloc.h"
 #include "misc.h"
 #include <stdbool.h>
 
