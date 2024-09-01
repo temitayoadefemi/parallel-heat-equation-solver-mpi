@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
-#include <structs.h>
+#include "structs.h"
 
-#include "mplib.h"
+#include "mpilib.h"
 
 #define TRUE  1
 #define FALSE 0
