@@ -71,18 +71,20 @@ void par_halo_exchange_image_update(master_str *master, MPI_Datatype hor_halo_ty
 
 
 
-void par_process(master_str *master) {
+void par_process(master_str *master, cell **local_grid, ) {
+
+    
 
 	 for (int step = 0; step < 1000; step++) {
         
-        send_halos_2D(&master->cart, hor_halo_type, &master->img, master->slice);
-        receive_halos_2D(&master->cart, hor_halo_type, &master->img, master->slice);
+        send_halos_2D(&master->cart, hor_halo_type, &local_grid);
+        receive_halos_2D(&master->cart, hor_halo_type, &local_grid);
         complete_communication_2D(&master->cart);
 
         solve_heat_equation(cell **local_grid, double dx, double dy, double dt);
 
         if (step % 10 == 0) {
-            
+
             refine_mesh(cell **local_grid, double dx, double dy);
         }
     }
