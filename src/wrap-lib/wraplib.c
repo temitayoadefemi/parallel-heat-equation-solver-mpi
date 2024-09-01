@@ -76,7 +76,7 @@ void start_timing(master_str *master)
 	if(master->params.version == serial)
 	{
 		serial_start_timing(master);
-        
+
 	}else if(master->params.version == par2D)
 	{
 		par_start_timing(master);
@@ -99,6 +99,7 @@ void process(master_str *master)
 	if(master->params.version == serial)
 	{
 		serial_process(master);
+        
 	}else if(master->params.version == par2D)
 	{
 		par_process(master);
