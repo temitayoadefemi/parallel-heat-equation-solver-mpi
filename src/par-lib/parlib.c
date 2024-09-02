@@ -27,60 +27,27 @@ void par_initialise_buffers(master_str *master)
     initialize_cell_buffers(&master->cell.buffers.global.values, &master->cell.buffers.global.levels, &master->dimensions )
 }
 
-void par_get_ustart_uend(master_str *master)
+void par_halo_exchange(master_str *master)
 {
-#ifdef OVERLAP
-	master->slice.ustart.width  = 2;
-	master->slice.ustart.height = 2;
-	master->slice.uend.width  = master->slice.actual.width;
-	master->slice.uend.height = master->slice.actual.height;
-#else
-	master->slice.ustart.width  = 1;
-	master->slice.ustart.height = 1;
-	master->slice.uend.width  = master->slice.actual.width  + 1;
-	master->slice.uend.height = master->slice.actual.height + 1;
-#endif	
-}
 
-void par_halo_exchange_image_update(master_str *master, MPI_Datatype hor_halo_type)
-{
-	par_get_ustart_uend(master);
-
-    send_halos_2D(&master->cart, hor_halo_type, &master->img, master->slice);
-    receive_halos_2D(&master->cart, hor_halo_type, &master->img, master->slice);
-
-#ifdef OVERLAP
-    /* update only the entries not on the boundaries until communication is complete*/
-    update_image_slice(&master->img, master->slice.ustart, master->slice.uend);
-#endif       
-
+    send_halos_2D(&master->cart, row_type, column_type);
+    receive_halos_2D(&master->cart, hor_halo_type, &master->img, master->slice);     
     complete_communication_2D(&master->cart);
 
-#ifdef OVERLAP	
-	/* update the boundaries received*/	
-	update_image_slice_boundaries(&master->img, master->slice.actual);
-#else
-	update_image_slice(&master->img, master->slice.ustart, master->slice.uend);
-#endif
 }
 
 
 
 void par_process(master_str *master) {
 
-    
-
 	 for (int step = 0; step < 1000; step++) {
         
-        sen
-        receive_halos_2D(&master->cart, hor_halo_type, &master->cell.buffers.local);
-        complete_communication_2D(&master->cart);
-
-        solve_heat_equation(&master->cell.buffers.local, double dx, double dy, double dt);
+        par_halo_exchange(master);
+        solve_heat_equation(&master->cell.buffers.local.values, dx, dy, dt, &master->slice);
 
         if (step % 10 == 0) {
 
-            refine_mesh(&master->cell.buffers.local, double dx, double dy);
+            refine_mesh(&master->cell.buffers.local.levels, &master->cell.buffers.local.values, dx, dy)
         }
     }
 }
