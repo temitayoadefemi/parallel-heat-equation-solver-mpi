@@ -54,7 +54,7 @@ void setup_cartesian_topology(comm_str *comm, cart_str *cart)
 	MPI_Cart_shift(cart->comm2d, vertical, cart->disp, &cart->b.val, &cart->t.val);
 }
 
-void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, *cell local_grid)
+void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, **double values, slc_str slice)
 {
 	/*
 	 * Use non-blocking communications.
@@ -63,19 +63,19 @@ void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_ty
 	 * Then sent the horisontal halo values 
 	 * from top to bottom and then from bottom to top
 	 */ 
-    MPI_Issend(&local_grid[local_grid.actual.width][1], 1, row_type, cart->down.val, 0, cart->comm2d, &cart->reqs[0]);
-    MPI_Issend(&local_grid[1][1], 1, row_type, cart->up.val, 1, cart->comm2d, &cart->reqs[1]);
-    MPI_Issend(&local_grid[1][1], 1, column_type, cart->left.val, 3, cart->comm2d, &cart->reqs[2]);
-    MPI_Issend(&local_grid[1][local_grid.actual.height], 1, column_type, cart->right.val, 2, cart->comm2d, &cart->reqs[3]);
+    MPI_Issend(&values[slice.actual.width][1], 1, row_type, cart->down.val, 0, cart->comm2d, &cart->reqs[0]);
+    MPI_Issend(&values[1][1], 1, row_type, cart->up.val, 1, cart->comm2d, &cart->reqs[1]);
+    MPI_Issend(&values[1][1], 1, column_type, cart->left.val, 3, cart->comm2d, &cart->reqs[2]);
+    MPI_Issend(&values[1][slice.actual.height], 1, column_type, cart->right.val, 2, cart->comm2d, &cart->reqs[3]);
 
 }		
 
-void receive_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, *cell local_grid)
+void receive_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, **double values, slc_str slice)
 {
 
-	MPI_Irecv(&local_grid[0][1], 1, row_type, cart->up.val, 0, cart->comm2d, &cart->reqs[4]);
-    MPI_Irecv(&local_grid[local_grid.actual.width+1][1], 1, row_type, cart->down.val, 1, cart->comm2d, &cart->reqs[5]);
-    MPI_Irecv(&local_grid[1][local_grid.actual.height + 1], 1, column_type, cart->right.val, 3, cart->comm2d, &cart->reqs[6]);
+	MPI_Irecv(&values[0][1], 1, row_type, cart->up.val, 0, cart->comm2d, &cart->reqs[4]);
+    MPI_Irecv(&values[slice.actual.width + 1][1], 1, row_type, cart->down.val, 1, cart->comm2d, &cart->reqs[5]);
+    MPI_Irecv(&values[1][slice.actual.height + 1], 1, column_type, cart->right.val, 3, cart->comm2d, &cart->reqs[6]);
     MPI_Irecv(&local_grid[1][0], 1, column_type, cart->left.val, 2, cart->comm2d, &cart->reqs[7]);
 
 
