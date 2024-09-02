@@ -18,10 +18,10 @@ void initialize_cell_buffers(double **values, double **levels, dim_str dimension
 void initialize_dt(double *dt, double dx, double dy);
 
 // Function to solve the heat equation
-void solve_heat_equation(double **values, double dx, double dy, double dt, int local_lx, int local_ly);
+void solve_heat_equation(double **values, double dx, double dy, double dt);
 
 // Function to refine the mesh
-void refine_mesh(double **levels, double **values, double dx, double dy, int local_lx, int local_ly, cell **ca, int MAX_LEVEL);
+void refine_mesh(double **levels, double **values, double dx, double dy, slc_str slice, int MAX_LEVEL);
 
 // Function to distribute cells
 void distribute_cells(double **local, double **global, cart_str cart, slc_str slice, master_str *master);
