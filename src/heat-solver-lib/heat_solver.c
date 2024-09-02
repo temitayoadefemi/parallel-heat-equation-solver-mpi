@@ -4,37 +4,66 @@
 #include "structs.h"
 #include "misc.h"
 #include <stdbool.h>
+#include <math.h>
 
+slc_str get_serial_dims(master_str *master)
+{
+    slc_str slice;
 
-void initialize_grid(cell **global_grid, master *master) {
-    printf("Entering initialize_grid\n");
-    
-    // Check allocation sizes
-    printf("Grid dimensions: %d x %d\n", master->dimensions.landscape, master->dimensions.landscape);
-    
-    // Add checks before accessing arrays
-    if (grid != NULL) {
-        printf("Grid allocated successfully\n");
-    } else {
-        printf("Error: Grid not allocated\n");
-        return;
-    }
-    
+    slice.actual.width = master->params.landscape;
+    slice.actual.height = master->params.landscape;
+
+    slice.rem.width = 0;
+    slice.rem.height = 0;
+
+    slice.padded.width  = slice.actual.width  + slice.rem.width;
+    slice.padded.height = slice.actual.height + slice.rem.height;
+
+    slice.halo.width = slice.actual.width + 2;
+    slice.halo.height = slice.actual.height + 2;
+
+    return slice;
+}
+
+slc_str get_parallel_dims(master_str *master)
+{
+    slc_str slice;
+
+    slice.actual.width  = (int) floor((double)master->params.landscape  / (double)cart.dims[0]);
+    slice.actual.height = (int) floor((double)master->params.landscape / (double)cart.dims[1]);
+
+    slice.rem.width  = master->params.landscape - slice.actual.width  * cart.dims[0];
+    slice.rem.height = master->params.landscape - slice.actual.height * cart.dims[1];
+
+    slice.padded.width  = slice.actual.width  + slice.rem.width;
+    slice.padded.height = slice.actual.height + slice.rem.height;
+
+    if(cart.coords[0] == cart.dims[0] - 1)
+        slice.actual.width = slice.padded.width;
+
+    if(cart.coords[1] == cart.dims[1] - 1)
+        slice.actual.height = slice.padded.height;
+
+    slice.halo.height = slice.actual.height + 2;
+    slice.halo.width  = slice.actual.width  + 2;
+
+    return slice;
+}
+
+void initialize_cell_buffers(**double values, **double levels, dim_str dimensions ) {
     // Add bounds checking in loops
-    for (int i = 0; i < master->dimensions.landscape; i++) {
-        for (int j = 0; j < master->dimensions.landscape; j++) {
+    for (int i = 0; i < dimensions.width; i++) {
+        for (int j = 0; j < dimensions.height; j++) {
             double r = uni();
             if (r < 0.51) {
-                grid[i][j].value = 1.5;
-                grid[i][j].level = 3;
+                values[i][j] = 1.5;
+                levels[i][j] = 3;
             } else {
-                grid[i][j].value = 8.5;
-                grid[i][j].level = 10;
+                values[i][j] = 8.5;
+                levels[i][j] = 10;
             }
         }
     }
-    
-    printf("Grid initialization complete\n");
 }
 
 void initialize_dt(double *dt, double dx, double dy) {
@@ -42,21 +71,22 @@ void initialize_dt(double *dt, double dx, double dy) {
 }
 
 
-void solve_heat_equation(cell **local_grid, double dx, double dy, double dt)  {
+
+void solve_heat_equation(**double values, double dx, double dy, double dt)  {
     for (int i = 1; i < local_lx - 1; i++) {
         for (int j = 1; j < local_ly - 1; j++) {
-            double laplacian_value = laplacian(local_grid, i, j, dx, dy);
-            local_grid[i][j].value += dt * laplacian_value;
+            double laplacian_value = laplacian(values, i, j, dx, dy);
+            values[i][j] += dt * laplacian_value;
         }
     }
 }
 
 
-void refine_mesh(cell **local_grid, double dx, double dy) {
+void refine_mesh(**double levels, **double values, double dx, double dy) {
     for (int i = 1; i < local_lx - 1; i++) {
         for (int j = 1; j < local_ly - 1; j++) {
-            if (local_grid[i][j].level < MAX_LEVEL && fabs(laplacian(local_grid, i, j, dx, dy)) > 0.1) {
-                local_grid[i][j].level++;
+            if (ca[i][j].level < MAX_LEVEL && fabs(laplacian(values, i, j, dx, dy)) > 0.1) {
+                levels[i][j]++;
                 update_neighbors(i, j, local_grid);
             }
         }
@@ -64,19 +94,20 @@ void refine_mesh(cell **local_grid, double dx, double dy) {
 }
 
 
-void update_neighbors(int i, int j, cell **local_grid) {
+void update_neighbors(int i, int j, **double levels) {
     int neighbors[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     for (int k = 0; k < 4; k++) {
         int ni = i + neighbors[k][0];
         int nj = j + neighbors[k][1];
         if (ni >= 0 && ni < LX && nj >= 0 && nj < LY) {
-            local_grid[ni][nj].level = fmax(local_grid[ni][nj].level, local_grid[i][j].level - 1);
+           levels[ni][nj] = fmax(levels[ni][nj], levels[i][j] - 1);
         }
     }
 }
 
-double laplacian(cell **local_grid, int i, int j, double dx, double dy) {
-    return (local_grid[i+1][j].value + local_grid[i-1][j].value - 2*local_grid[i][j].value) / (dx*dx) +
-           (local_grid[i][j+1].value + local_grid[i][j-1].value - 2*local_grid[i][j].value) / (dy*dy);
+
+double laplacian(**double values, int i, int j, double dx, double dy) {
+    return (values[i+1][j] + values[i-1][j] - 2*values[i][j]) / (dx*dx) +
+           (values[i][j+1] + values[i][j-1] - 2*values[i][j]) / (dy*dy);
 }
 
