@@ -73,6 +73,7 @@ void initialize_dt(double *dt, double dx, double dy) {
     *dt = 0.25 * (dx * dx + dy * dy); 
 }
 
+
 // Function to solve the heat equation
 void solve_heat_equation(double **values, double dx, double dy, double dt, slc_str slice)  {
     // Ensure local_lx and local_ly are defined or passed as parameters
@@ -85,8 +86,18 @@ void solve_heat_equation(double **values, double dx, double dy, double dt, slc_s
     }
 }
 
+void distribute_cells(double **inbuff, double **outbuff, slc_str slice) {
+    // Loop through each cell in the smaller grid to assign values from the global grid.
+    for (int i = 0; i < slice.actual.width; i++) {
+        for (int j = 0; j < slice.actual.height; j++) {
+            int global_row = master->cart.coords[0] * master->dimensions.rows + i;
+            int global_col = master->cart.coords[1] * master->dimensions.cols + j;
+            outbuff[i][j] = inbuff[global_row][global_col];
+        }
+    }
+}
 // Function to refine the mesh
-void refine_mesh(double **levels, double **values, double dx, double dy, slc_str slice) {
+void refine_mesh(double **levels, double **values, double dx, double dy, slc_str slice, int MAX_LEVEL) {
     // Ensure local_lx, local_ly, ca, and MAX_LEVEL are defined or passed as parameters
     for (int i = 1; i < slice.actual.width - 1; i++) {
         for (int j = 1; j < slice.actual.height - 1; j++) {
@@ -103,8 +114,8 @@ void distribute_cells(double **local, double **global, cart_str cart, slc_str sl
     for (int i = 0; i < slice.actual.width; i++) {
         for (int j = 0; j < slice.actual.height; j++) {
             // Ensure master and its dimensions are defined or passed as parameters
-            int global_row = cart.coords[0] * master->dimensions.rows + i;
-            int global_col = cart.coords[1] * master->dimensions.cols + j;
+            int global_row = cart.coords[0] * slice.actual.width + i;
+            int global_col = cart.coords[1] * slice.actual.height + j;
             local[i][j] = global[global_row][global_col];
         }
     }
@@ -129,13 +140,13 @@ void copy_buff_to_mini(double **mini, double **local, slc_str slice) {
 }
 
 // Function to update neighbors
-void update_neighbors(int i, int j, double **levels) {
+void update_neighbors(int i, int j, double **levels, slc_str slice) {
     int neighbors[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     for (int k = 0; k < 4; k++) {
         int ni = i + neighbors[k][0];
         int nj = j + neighbors[k][1];
         // Ensure LX and LY are defined or passed as parameters
-        if (ni >= 0 && ni < LX && nj >= 0 && nj < LY) {
+        if (ni >= 0 && ni < slice.actual.width && nj >= 0 && nj < slice.actual.height) {
            levels[ni][nj] = fmax(levels[ni][nj], levels[i][j] - 1);
         }
     }
