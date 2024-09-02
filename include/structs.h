@@ -74,7 +74,7 @@ typedef struct cartesian_struct
 	int period[ndims];
 	int coords[ndims];
 	int reorder;
-	dir_str r, l, b, t;
+	dir_str right, left, down, up;
 } cart_str;
 
 /* Communication variables */
@@ -97,7 +97,7 @@ typedef struct master_struct
 	cell_str cell;
 	slc_str slice;
 	params_str params;
-
+	dim_str dimensions;
 	comm_str comm;
 	cart_str cart;
 
