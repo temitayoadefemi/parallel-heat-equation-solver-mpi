@@ -9,11 +9,7 @@
 #include "heat_solver.h"
 #include "mplib.h"
 
-#define PRINTFREQ 200
-#define MASTER_PROCESS 0
-#define STOP_DELTA 0.1
-#define TRUE  1
-#define FALSE 0
+
 
 void par_initialise_comm(master_str *master)
 {
@@ -28,7 +24,7 @@ void par_initialise_buffers(master_str *master)
 	 * old and new image arrays to 255(white)
 	 * and setup fixed sawtooth boundaries to left and right
 	 */
-	initialise_cell_buffers(master->img.buffers.old, master->img.buffers.new, 255.0, master->slice.halo);
+	initialise_cell_buffers(&master);
 	setup_parallel_sawtooth_boundaries(master->cart, &master->img, master->slice);
 }
 
@@ -71,21 +67,21 @@ void par_halo_exchange_image_update(master_str *master, MPI_Datatype hor_halo_ty
 
 
 
-void par_process(master_str *master, cell **local_grid, ) {
+void par_process(master_str *master) {
 
     
 
 	 for (int step = 0; step < 1000; step++) {
         
-        send_halos_2D(&master->cart, hor_halo_type, &local_grid);
-        receive_halos_2D(&master->cart, hor_halo_type, &local_grid);
+        send_halos_2D(&master->cart, hor_halo_type, &master->cell.buffers.local);
+        receive_halos_2D(&master->cart, hor_halo_type, &master->cell.buffers.local);
         complete_communication_2D(&master->cart);
 
-        solve_heat_equation(cell **local_grid, double dx, double dy, double dt);
+        solve_heat_equation(&master->cell.buffers.local, double dx, double dy, double dt);
 
         if (step % 10 == 0) {
 
-            refine_mesh(cell **local_grid, double dx, double dy);
+            refine_mesh(&master->cell.buffers.local, double dx, double dy);
         }
     }
 }
@@ -117,23 +113,7 @@ void par_print_timing(master_str master)
 
 void par_gather_write_data(master_str *master)
 {
-    update_buffer(master->img.buffers.local, master->img.buffers.old, master->slice.actual);
 
-  	if(master->comm.rank == MASTER_PROCESS)
-  	{
-  		printf("\nFinished %d iterations\nGathering data...", master->params.citer);
-	}
-
-	/* gather the results from all slices into master buffer */
-    mpgather(master->cart, &master->img.buffers.local[0][0], &master->img.buffers.master[0][0], 
-    		 master->slice.padded.width * master->slice.padded.height);
-
-  	if(master->comm.rank == MASTER_PROCESS)
-  	{
-		printf("\t Done\nWriting <%s>\n", master->img.ifilename); 
-	    pgmwrite_generalised_cascaded(master->img.ifilename, &master->img.buffers.master[0][0], master->cart, master->img.size, master->slice);
-	    par_print_timing(*master);
-	}
 }
 
 void par_clean_buffers_stop_comm(master_str *master)
