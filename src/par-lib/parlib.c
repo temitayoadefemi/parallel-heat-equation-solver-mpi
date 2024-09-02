@@ -7,7 +7,7 @@
 #include "mem.h"
 #include "pgmio.h"
 #include "heat_solver.h"
-#include "mplib.h"
+#include "mpilib.h"
 
 
 
@@ -24,8 +24,7 @@ void par_initialise_buffers(master_str *master)
 	 * old and new image arrays to 255(white)
 	 * and setup fixed sawtooth boundaries to left and right
 	 */
-	initialise_cell_buffers(&master);
-	setup_parallel_sawtooth_boundaries(master->cart, &master->img, master->slice);
+    initialize_cell_buffers(&master->cell.buffers.global.values, &master->cell.buffers.global.levels, &master->dimensions )
 }
 
 void par_get_ustart_uend(master_str *master)
@@ -73,7 +72,7 @@ void par_process(master_str *master) {
 
 	 for (int step = 0; step < 1000; step++) {
         
-        send_halos_2D(&master->cart, hor_halo_type, &master->cell.buffers.local);
+        sen
         receive_halos_2D(&master->cart, hor_halo_type, &master->cell.buffers.local);
         complete_communication_2D(&master->cart);
 
