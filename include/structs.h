@@ -14,14 +14,48 @@ typedef struct dimensions_struct
 {
 	int width;
 	int height;
+
 } dim_str;
 
+typedef struct buf_struct
+{
+	double **global;
+	double **local;
+	double **temp;
+	double **mini;
 
-typedef struct cell_struct {
-    double value;
-    int level;
-} cell;
+}buf_str;
 
+/* structure containing all the neccessary 
+ * information about the image
+ */
+typedef struct cell_struct
+{
+	buf_str buffers;
+	dim_str size;
+
+} cell_str;
+/* structure containing all the neccessary 
+ * information about the sliced image
+ */
+typedef struct slice_struct
+{
+	dim_str padded;
+	dim_str actual;
+	dim_str rem;
+	dim_str halo;
+	dim_str ustart,uend;
+}slc_str;
+
+typedef struct parameters_struct
+{
+	int version;
+	int iterations;
+	int delta_freq;
+	int avg_freq;
+	int citer;
+	double avg_pixel;
+}params_str;
 
 /* Contains the inforamtion about a neighbour */
 typedef struct dim_comm_struct
@@ -58,15 +92,16 @@ typedef struct time_struct
 	double average;
 }time_str;
 
+typedef struct master_struct
+{
+	cell_str cell;
+	slc_str slice;
+	params_str params;
 
-typedef struct master {
+	comm_str comm;
+	cart_str cart;
 
-    params_str params;
-    comm_str comm;
-    cart_str cart;
-    dim_str dimensions;
-    int version;
 	time_str time;
-} master_str;
+}master_str;
 
 #endif	//__STRUCTS_H__
