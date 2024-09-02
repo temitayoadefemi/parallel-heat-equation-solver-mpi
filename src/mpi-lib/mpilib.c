@@ -54,7 +54,7 @@ void setup_cartesian_topology(comm_str *comm, cart_str *cart)
 	MPI_Cart_shift(cart->comm2d, vertical, cart->disp, &cart->b.val, &cart->t.val);
 }
 
-void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, **double values, slc_str slice)
+void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, double **values, slc_str slice)
 {
 	/*
 	 * Use non-blocking communications.
@@ -70,15 +70,13 @@ void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_ty
 
 }		
 
-void receive_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, **double values, slc_str slice)
+void receive_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, double **values, slc_str slice)
 {
 
 	MPI_Irecv(&values[0][1], 1, row_type, cart->up.val, 0, cart->comm2d, &cart->reqs[4]);
     MPI_Irecv(&values[slice.actual.width + 1][1], 1, row_type, cart->down.val, 1, cart->comm2d, &cart->reqs[5]);
     MPI_Irecv(&values[1][slice.actual.height + 1], 1, column_type, cart->right.val, 3, cart->comm2d, &cart->reqs[6]);
-    MPI_Irecv(&local_grid[1][0], 1, column_type, cart->left.val, 2, cart->comm2d, &cart->reqs[7]);
-
-
+    MPI_Irecv(&values[1][0], 1, column_type, cart->left.val, 2, cart->comm2d, &cart->reqs[7]);
 }
 
 void complete_communication_2D(cart_str *cart)
@@ -87,14 +85,14 @@ void complete_communication_2D(cart_str *cart)
 	 * Wait for left to right and right to left sends to complete
 	 * Wait for bottom to top and bottom to top sends to complete
 	 */ 
-	MPI_Wait(&cart->l.sreq, &cart->r.sstat);
-	MPI_Wait(&cart->r.sreq, &cart->l.sstat);
-	MPI_Wait(&cart->t.sreq, &cart->b.sstat);
-	MPI_Wait(&cart->b.sreq, &cart->t.sstat);
-	MPI_Wait(&cart->l.rreq, &cart->r.rstat);
-	MPI_Wait(&cart->r.rreq, &cart->l.rstat);
-	MPI_Wait(&cart->t.rreq, &cart->b.rstat);
-	MPI_Wait(&cart->b.rreq, &cart->t.rstat);
+	MPI_Wait(&cart->left.sreq, &cart->right.sstat);
+	MPI_Wait(&cart->right.sreq, &cart->left.sstat);
+	MPI_Wait(&cart->up.sreq, &cart->down.sstat);
+	MPI_Wait(&cart->down.sreq, &cart->up.sstat);
+	MPI_Wait(&cart->left.rreq, &cart->right.rstat);
+	MPI_Wait(&cart->right.rreq, &cart->left.rstat);
+	MPI_Wait(&cart->up.rreq, &cart->down.rstat);
+	MPI_Wait(&cart->down.rreq, &cart->up.rstat);
 
 }
 
@@ -110,14 +108,14 @@ void initialize_mpi_types(MPI_Datatype *column_type, MPI_Datatype *row_type, mas
     
 }
 void initialize_mpi_buffer(void **buffer, int *bsize, master_str *master) {
-    int bsize = (master->dimensions.rows + master->dimensions.cols) * sizeof(Cell) + MPI_BSEND_OVERHEAD;
-    void* buffer = malloc(bsize);
-    if (buffer == NULL) {
+    *bsize = (master->dimensions.rows + master->dimensions.cols) * sizeof(Cell) + MPI_BSEND_OVERHEAD;
+    *buffer = malloc(*bsize);
+    if (*buffer == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-     MPI_Buffer_attach(buffer, bsize);
+     MPI_Buffer_attach(*buffer, *bsize);
 
 }
 
@@ -125,6 +123,11 @@ void initialize_mpi_buffer(void **buffer, int *bsize, master_str *master) {
 void mpbcast(cart_str cart, cell **inbuff, int ndata)
 {
 	MPI_Bcast(&inbuff[0][0], size*size, MPI_INT, 0, cart.comm2d);
+}
+
+void mpireduce(cart_str cart, double **inbuff, int **outbuff, int size) {
+
+    MPI_Reduce(&inbuff[0][0], &outbuff[0][0], size*size, MPI_INT, MPI_SUM, 0, cart.comm2d);
 }
 
 
