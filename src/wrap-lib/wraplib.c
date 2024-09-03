@@ -30,29 +30,6 @@ void setup_buffers(master_str *master)
 	}
 }
 
-void start_timing(master_str *master)
-{
-	if(master->params.version == serial)
-	{
-		serial_start_timing(master);
-
-	}else if(master->params.version == par2D)
-	{
-		par_start_timing(master);
-	}
-}
-
-void stop_timing(master_str *master)
-{
-	if(master->params.version == serial)
-	{
-		serial_stop_timing(master);
-        
-	}else if(master->params.version == par2D)
-	{
-		par_stop_timing(master);
-	}
-}
 
 void process(master_str *master)
 {
