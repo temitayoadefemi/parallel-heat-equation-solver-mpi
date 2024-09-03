@@ -231,3 +231,4 @@ void writecelldynamic(char *cellfile, int **cell, int l)
   fclose(fp);
   printf("writecelldynamic: file closed\n");
 }
+
