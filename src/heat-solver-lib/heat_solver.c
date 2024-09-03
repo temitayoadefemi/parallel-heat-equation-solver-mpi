@@ -73,7 +73,6 @@ void initialize_dt(double *dt, double dx, double dy) {
     *dt = 0.25 * (dx * dx + dy * dy); 
 }
 
-
 // Function to solve the heat equation
 void solve_heat_equation(double **values, double dx, double dy, double dt, slc_str slice)  {
     // Ensure local_lx and local_ly are defined or passed as parameters
@@ -96,6 +95,7 @@ void distribute_cells(double **inbuff, double **outbuff, slc_str slice) {
         }
     }
 }
+
 // Function to refine the mesh
 void refine_mesh(double **levels, double **values, double dx, double dy, slc_str slice, int MAX_LEVEL) {
     // Ensure local_lx, local_ly, ca, and MAX_LEVEL are defined or passed as parameters
@@ -135,6 +135,25 @@ void copy_buff_to_mini(double **mini, double **local, slc_str slice) {
     for (int i = 1; i <= slice.actual.width; i++) { // Removed extra comma
         for (int j = 1; j <= slice.actual.height; j++) {
             mini[i - 1][j - 1] = local[i][j];
+        }
+    }
+}
+
+void initialise_edges(double **local, dim_str slice){
+	int xi, yi;
+    for (i = 0; i <= slice.width+1; i++) {
+        for (j = 0; j <= slice.height+1; j++) {
+            if (i == 0 || i == slice.width+1 || j == 0 || j == slice.height+1) {
+                local[i][j] = 0;
+            }
+        }
+    }
+}
+
+void copy_buff_to_local(double **mini, double **local, slc_str slice) {
+    for (int i = 1; i <= slice.actual.width; i++) { // Removed extra comma
+        for (int j = 1; j <= slice.actual.height; j++) {
+            local[i][j] = mini[i][j];
         }
     }
 }
