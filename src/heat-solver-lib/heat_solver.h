@@ -24,10 +24,13 @@ void solve_heat_equation(double **values, double dx, double dy, double dt);
 void refine_mesh(double **levels, double **values, double dx, double dy, slc_str slice, int MAX_LEVEL);
 
 // Function to distribute cells
-void distribute_cells(double **local, double **global, cart_str cart, slc_str slice, master_str *master);
+void distribute_cells(double **local, double **global, cart_str cart, slc_str slice);
 
 // Function to zero out temporary cell buffer
 void zerotmpcell(double **temp, dim_str dimensions);
+
+
+void initialise_edges(double **local, dim_str slice);
 
 // Function to copy buffer to mini
 void copy_buff_to_mini(double **mini, double **local, slc_str slice);
