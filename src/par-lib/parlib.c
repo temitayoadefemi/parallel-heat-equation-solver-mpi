@@ -24,7 +24,8 @@ void par_initialise_buffers(master_str *master)
 	 * old and new image arrays to 255(white)
 	 * and setup fixed sawtooth boundaries to left and right
 	 */
-    initialize_cell_buffers(&master->cell.buffers.global.values, &master->cell.buffers.global.levels, &master->dimensions )
+    initialize_cell_buffers(&master->cell.buffers.global.values, &master->cell.buffers.global.levels, &master->dimensions);
+    distribute_cells(&master->cell.buffers.mini.values, &master->cell.buffers.global.values, &master->cart, &master->slice)
 }
 
 void par_halo_exchange(master_str *master)
@@ -35,8 +36,6 @@ void par_halo_exchange(master_str *master)
     complete_communication_2D(&master->cart);
 
 }
-
-
 
 void par_process(master_str *master) {
 
@@ -52,34 +51,18 @@ void par_process(master_str *master) {
     }
 }
 
-void par_start_timing(master_str *master)
-{
-#ifdef TIME
-    MPI_Barrier(master->cart.comm2d);
-    master->time.start = gettime();
-#endif
-}
-
-void par_stop_timing(master_str *master)
-{
-#ifdef TIME
-    MPI_Barrier(master->cart.comm2d);
-    master->time.local = gettime() - master->time.start;
-    master->time.average = mpgsum(master->cart, &master->time.local) / master->comm.size;
-#endif	
-}
-
-void par_print_timing(master_str master)
-{
-#ifdef TIME
-    printf("Average Time for %d iterations = %f\n", master.params.citer, master.time.average);
-#endif	
-}
-
 
 void par_gather_write_data(master_str *master)
 {
+    copy_buff_to_mini(&master->cell.buffers.mini.values, &master->cell.buffers.local.values, &master->slice);
+    zerotmpcell(&master->cell.buffers.temp.values, &master->dimensions);
+    distribute_cells(&master->cell.buffers.local.values, &master->cell.buffers.global.values, &master->cart, &master->slice);
+    mpireduce(&master->cart, &master->cell.buffers.temp.values, &master->cell.buffers.global.values, &master->dimensions.width*&master->dimensions.height);
 
+
+    if (master->comm.rank == 0) {
+        save_to_pbm("heat_equation", global_grid);
+    }
 }
 
 void par_clean_buffers_stop_comm(master_str *master)
