@@ -50,8 +50,8 @@ void setup_cartesian_topology(comm_str *comm, cart_str *cart)
 	 * along the horizontal axis (left to right) 
 	 * and then along vertical axis (top to bottom)
 	 */
-	MPI_Cart_shift(cart->comm2d, horizontal, cart->disp, &cart->l.val, &cart->r.val);
-	MPI_Cart_shift(cart->comm2d, vertical, cart->disp, &cart->b.val, &cart->t.val);
+	MPI_Cart_shift(cart->comm2d, horizontal, cart->disp, &cart->left.val, &cart->right.val);
+	MPI_Cart_shift(cart->comm2d, vertical, cart->disp, &cart->down.val, &cart->up.val);
 }
 
 void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, double **values, slc_str slice)
