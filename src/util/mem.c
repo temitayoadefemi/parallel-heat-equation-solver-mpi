@@ -14,8 +14,8 @@
 	}\
 })
 
-int** allocate_2d_array(int rows, int cols) {
-    int **array = (double**) arralloc(sizeof(double), 2, rows, cols);
+double** allocate_2d_array(int rows, int cols) {
+    double **array = (double**) arralloc(sizeof(double), 2, rows, cols);
     if (array == NULL) {
         handle_allocation_failure();
     }
@@ -28,12 +28,12 @@ buf_str allocate_serial_buffers()
 {
 	buf_str buffer;
 
-	buffer.master = NULL;
+	buffer.global = NULL;
 	buffer.local = NULL;
     buffer.temp = NULL;
     buffer.mini = NULL;
 
-	buffer.master = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
+	buffer.global= allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
 	buffer.local = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
 	buffer.temp = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
     buffer.mini = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
@@ -61,7 +61,7 @@ buf_str allocate_parallel_buffers(comm_str comm, slc_str slice, master_str *mast
 }
 
 void dealocate_buffers(buf_str *buffers) {
-    
+
 	FREE(buffers->master);
 	FREE(buffers->local);
 	FREE(buffers->temp);
