@@ -10,7 +10,7 @@
 //    cell - pointer to the 2D array of cells
 //    l - the length of the array (assumed square for simplicity)
 
-void writecelldynamic(char *cellfile, int **cell, int l);
+void writecelldynamic(char *filename, double **grid, int landscape_size);
 
 // Seeds the random number generator with a specific integer
 // Parameter:
