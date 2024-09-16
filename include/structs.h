@@ -17,12 +17,19 @@ typedef struct dimensions_struct
 
 } dim_str;
 
+typedef struct grid_struct 
+{
+	double **values;
+	double **levels;
+
+}grid_str;
+
 typedef struct buf_struct
 {
-	double **global;
-	double **local;
-	double **temp;
-	double **mini;
+	grid_str global;
+	grid_str local;
+	grid_str temp;
+	grid_str mini;
 
 }buf_str;
 
@@ -47,17 +54,19 @@ typedef struct slice_struct
 	dim_str ustart,uend;
 }slc_str;
 
-typedef struct parameters_struct
+typedef struct parameters
 {
-	int version;
-	int iterations;
-	int delta_freq;
-	int avg_freq;
-	int citer;
-	double avg_pixel;
-}params_str;
+	  int seed;
+      double rho;
+	  int printfreq;
+	  int landscape;
+	  int maxstep;
+	  double r;
+	  version version;
+} params_str;
 
 /* Contains the inforamtion about a neighbour */
+
 typedef struct dim_comm_struct
 {
 	int val;
@@ -76,6 +85,7 @@ typedef struct cartesian_struct
 	int reorder;
 	dir_str right, left, down, up;
 } cart_str;
+
 
 /* Communication variables */
 typedef struct communication_struct
