@@ -14,6 +14,13 @@
 	}\
 })
 
+// Handle memory allocation failure.
+void handle_allocation_failure() {
+    fprintf(stderr, "Memory allocation failed\n");
+    exit(EXIT_FAILURE);
+}
+
+
 double** allocate_2d_array(int rows, int cols) {
     double **array = (double**) arralloc(sizeof(double), 2, rows, cols);
     if (array == NULL) {
@@ -24,54 +31,73 @@ double** allocate_2d_array(int rows, int cols) {
 
 
 
-buf_str allocate_serial_buffers()
-{
+buf_str allocate_serial_buffers(slc_str slice) {
+
 	buf_str buffer;
 
-	buffer.global = NULL;
-	buffer.local = NULL;
-    buffer.temp = NULL;
-    buffer.mini = NULL;
+	buffer.global.values = NULL;
+	buffer.local.values = NULL;
+	buffer.temp.values = NULL;
+    buffer.mini.values = NULL;
 
-	buffer.global= allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
-	buffer.local = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
-	buffer.temp = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
-    buffer.mini = allocate_2d_array(local_grid.halo.width, local_grid.halo.width);
+    buffer.global.levels = NULL;
+	buffer.local.levels = NULL;
+	buffer.temp.levels = NULL;
+    buffer.mini.levels = NULL;
+
+	buffer.global.values = allocate_2d_array(slice.actual.width, slice.actual.height );
+	buffer.local.values = allocate_2d_array(slice.halo.width, slice.halo.height);
+    buffer.mini.values = allocate_2d_array(slice.actual.width, slice.actual.height);
+
+    buffer.global.levels = allocate_2d_array(slice.actual.width, slice.actual.height);
+	buffer.local.levels = allocate_2d_array(slice.halo.width, slice.halo.height);
+    buffer.mini.levels = allocate_2d_array(slice.actual.width, slice.actual.height);
 
 
-	return buffer;
+    return buffer;
 }
 
-buf_str allocate_parallel_buffers(comm_str comm, slc_str slice, master_str *master )
-{
+buf_str allocate_parallel_buffers(slc_str slice, cart_str cart) {
+
 	buf_str buffer;
 
-	buffer.master = NULL;
-	buffer.local = NULL;
-	buffer.temp = NULL;
-	buffer.mini = NULL;
+	buffer.global.values = NULL;
+	buffer.local.values = NULL;
+	buffer.temp.values = NULL;
+    buffer.mini.values = NULL;
+
+    buffer.global.levels = NULL;
+	buffer.local.levels = NULL;
+	buffer.temp.levels = NULL;
+    buffer.mini.levels = NULL;
 
 	/* Allocate arrays dynamically using special malloc routine. */
-	buffer.master =  allocate_2d_array(master->dimensions.width, master->dimensions.height);
-	buffer.local  = allocate_2d_array(slice.padded.width, slice.padded.height);
-	buffer.temp  = allocate_2d_array(slice.halo.width, slice.halo.height);
-	buffer.mini  = allocate_2d_array(slice.halo.width, slice.halo.height);
+	buffer.global.values = allocate_2d_array(cart.dims[0] * slice.padded.width, cart.dims[1] * slice.padded.height);
+	buffer.local.values = allocate_2d_array(slice.halo.width, slice.halo.height);
+	buffer.temp.values = allocate_2d_array(cart.dims[0] * slice.padded.width, cart.dims[1] * slice.padded.height);
+    buffer.mini.values = allocate_2d_array(slice.actual.width, slice.padded.width);
+
+    buffer.global.levels = allocate_2d_array(cart.dims[0] * slice.padded.width, cart.dims[1] * slice.padded.height);
+	buffer.local.levels = allocate_2d_array(slice.halo.width, slice.halo.height);
+	buffer.temp.levels = allocate_2d_array(cart.dims[0] * slice.padded.width, cart.dims[1] * slice.padded.height);
+    buffer.mini.levels = allocate_2d_array(slice.actual.width, slice.padded.width);
+
 
 	return buffer;
 }
 
 void dealocate_buffers(buf_str *buffers) {
 
-	FREE(buffers->master);
-	FREE(buffers->local);
-	FREE(buffers->temp);
-	FREE(buffers->mini);
+	FREE(buffers->global.values);
+	FREE(buffers->local.values);
+	FREE(buffers->temp.values);
+	FREE(buffers->mini.values);
+
+    FREE(buffers->global.levels);
+	FREE(buffers->local.levels);
+	FREE(buffers->temp.levels);
+	FREE(buffers->mini.levels);
 }
 
-// Handle memory allocation failure.
-void handle_allocation_failure() {
-    fprintf(stderr, "Memory allocation failed\n");
-    exit(EXIT_FAILURE);
-}
 
 // Define a function to allocate memory for a 2D array.
