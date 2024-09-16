@@ -63,20 +63,20 @@ void send_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_ty
 	 * Then sent the horisontal halo values 
 	 * from top to bottom and then from bottom to top
 	 */ 
-    MPI_Issend(&values[slice.actual.width][1], 1, row_type, cart->down.val, 0, cart->comm2d, &cart->reqs[0]);
-    MPI_Issend(&values[1][1], 1, row_type, cart->up.val, 1, cart->comm2d, &cart->reqs[1]);
-    MPI_Issend(&values[1][1], 1, column_type, cart->left.val, 3, cart->comm2d, &cart->reqs[2]);
-    MPI_Issend(&values[1][slice.actual.height], 1, column_type, cart->right.val, 2, cart->comm2d, &cart->reqs[3]);
+    MPI_Issend(&values[slice.actual.width][1], 1, row_type, cart->down.val, 0, cart->comm2d, &cart->up.sreq);
+    MPI_Issend(&values[1][1], 1, row_type, cart->up.val, 1, cart->comm2d, &cart->down.sreq);
+    MPI_Issend(&values[1][1], 1, column_type, cart->left.val, 3, cart->comm2d, &cart->right.sreq);
+    MPI_Issend(&values[1][slice.actual.height], 1, column_type, cart->right.val, 2, cart->comm2d, &cart->left.sreq);
 
 }		
 
 void receive_halos_2D(cart_str *cart, MPI_Datatype row_type, MPI_Datatype column_type, double **values, slc_str slice)
 {
 
-	MPI_Irecv(&values[0][1], 1, row_type, cart->up.val, 0, cart->comm2d, &cart->reqs[4]);
-    MPI_Irecv(&values[slice.actual.width + 1][1], 1, row_type, cart->down.val, 1, cart->comm2d, &cart->reqs[5]);
-    MPI_Irecv(&values[1][slice.actual.height + 1], 1, column_type, cart->right.val, 3, cart->comm2d, &cart->reqs[6]);
-    MPI_Irecv(&values[1][0], 1, column_type, cart->left.val, 2, cart->comm2d, &cart->reqs[7]);
+	MPI_Irecv(&values[0][1], 1, row_type, cart->up.val, 0, cart->comm2d, &cart->down.rreq);
+    MPI_Irecv(&values[slice.actual.width + 1][1], 1, row_type, cart->down.val, 1, cart->comm2d, &cart->up.rreq);
+    MPI_Irecv(&values[1][slice.actual.height + 1], 1, column_type, cart->right.val, 3, cart->comm2d, &cart->left.rreq);
+    MPI_Irecv(&values[1][0], 1, column_type, cart->left.val, 2, cart->comm2d, &cart->right.rreq);
 }
 
 void complete_communication_2D(cart_str *cart)
@@ -96,38 +96,41 @@ void complete_communication_2D(cart_str *cart)
 
 }
 
-void initialize_mpi_types(MPI_Datatype *column_type, MPI_Datatype *row_type, master_str *master) {
+void initialize_mpi_types(MPI_Datatype *column_type, MPI_Datatype *row_type, slc_str slice) {
     // Create a vector type for transferring columns.
-    
-	MPI_Datatype column_type, row_type;
-    MPI_Type_vector(master->dimensions.rows, 1, master-dimensions.cols + 2, MPI_CELL, &column_type);
-    MPI_Type_commit(&column_type);
+    MPI_Type_vector(slice.actual.width, 1, slice.actual.height + 2, MPI_INT, column_type);
+    MPI_Type_commit(column_type); // Commit the type to use it for MPI operations.
 
-    MPI_Type_contiguous(master->dimensions.cols, MPI_CELL, &row_type);
-    MPI_Type_commit(&row_type);
-    
+    // Create a contiguous type for transferring rows.
+    MPI_Type_contiguous(slice.actual.height, MPI_INT, row_type);
+    MPI_Type_commit(row_type); // Commit the type to use it for MPI operations.
 }
-void initialize_mpi_buffer(void **buffer, int *bsize, master_str *master) {
-    *bsize = (master->dimensions.rows + master->dimensions.cols) * sizeof(Cell) + MPI_BSEND_OVERHEAD;
+
+// Initialize a buffer for MPI buffered send operations.
+void initialize_mpi_buffer(void **buffer, int *bsize, slc_str slice) {
+    // Calculate the required buffer size.
+    *bsize = (slice.actual.width + slice.actual.height) * sizeof(int) + MPI_BSEND_OVERHEAD;
+    
+    // Allocate the buffer.
     *buffer = malloc(*bsize);
     if (*buffer == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        MPI_Abort(MPI_COMM_WORLD, 1); // Abort MPI execution if memory allocation fails.
     }
 
-     MPI_Buffer_attach(*buffer, *bsize);
-
+    // Attach the buffer for use in buffered send operations.
+    MPI_Buffer_attach(*buffer, *bsize);
 }
 
 
-void mpbcast(cart_str cart, cell **inbuff, int ndata)
+void mpbcast(cart_str cart, double **inbuff, dim_str dims)
 {
-	MPI_Bcast(&inbuff[0][0], size*size, MPI_INT, 0, cart.comm2d);
+	MPI_Bcast(&inbuff[0][0], dims.width*dims.height, MPI_INT, 0, cart.comm2d);
 }
 
-void mpireduce(cart_str cart, double **inbuff, int **outbuff, int size) {
+void mpireduce(cart_str cart, double **inbuff, double **outbuff, dim_str dims) {
 
-    MPI_Reduce(&inbuff[0][0], &outbuff[0][0], size*size, MPI_INT, MPI_SUM, 0, cart.comm2d);
+    MPI_Reduce(&inbuff[0][0], &outbuff[0][0], dims.width*dims.height, MPI_INT, MPI_SUM, 0, cart.comm2d);
 }
 
 
