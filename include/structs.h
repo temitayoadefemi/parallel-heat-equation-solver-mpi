@@ -8,7 +8,15 @@ typedef enum version_enum
 {
 	serial,
 	par2D
-}version;
+} version;
+
+
+typedef enum {
+    SUCCESS,
+    FAILED
+} status;
+
+
 
 typedef struct dimensions_struct
 {
