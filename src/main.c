@@ -21,8 +21,6 @@ int main(int argc, char **argv)
         return 0;
     }
 
-
-
 	setup_buffers(&master);
 
 	process(&master);
