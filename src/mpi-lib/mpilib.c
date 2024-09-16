@@ -98,11 +98,11 @@ void complete_communication_2D(cart_str *cart)
 
 void initialize_mpi_types(MPI_Datatype *column_type, MPI_Datatype *row_type, slc_str slice) {
     // Create a vector type for transferring columns.
-    MPI_Type_vector(slice.actual.width, 1, slice.actual.height + 2, MPI_INT, column_type);
+    MPI_Type_vector(slice.actual.width, 1, slice.actual.height + 2, MPI_DOUBLE, column_type);
     MPI_Type_commit(column_type); // Commit the type to use it for MPI operations.
 
     // Create a contiguous type for transferring rows.
-    MPI_Type_contiguous(slice.actual.height, MPI_INT, row_type);
+    MPI_Type_contiguous(slice.actual.height, MPI_DOUBLE, row_type);
     MPI_Type_commit(row_type); // Commit the type to use it for MPI operations.
 }
 
@@ -125,12 +125,12 @@ void initialize_mpi_buffer(void **buffer, int *bsize, slc_str slice) {
 
 void mpbcast(cart_str cart, double **inbuff, dim_str dims)
 {
-	MPI_Bcast(&inbuff[0][0], dims.width*dims.height, MPI_INT, 0, cart.comm2d);
+	MPI_Bcast(&inbuff[0][0], dims.width*dims.height, MPI_DOUBLE, 0, cart.comm2d);
 }
 
 void mpireduce(cart_str cart, double **inbuff, double **outbuff, dim_str dims) {
 
-    MPI_Reduce(&inbuff[0][0], &outbuff[0][0], dims.width*dims.height, MPI_INT, MPI_SUM, 0, cart.comm2d);
+    MPI_Reduce(&inbuff[0][0], &outbuff[0][0], dims.width*dims.height, MPI_DOUBLE, MPI_SUM, 0, cart.comm2d);
 }
 
 
