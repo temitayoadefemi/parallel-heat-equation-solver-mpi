@@ -6,9 +6,9 @@
 #include <math.h> // Ensure math.h is included for math functions
 
 // Function prototypes
-slc_str get_serial_dims();
-slc_str get_parallel_dims(cart_str cart);
-void initialize_cell_buffers(double **values, double **levels, dim_str dimensions, cart_str cart);
+slc_str get_serial_dims(int landscape);
+slc_str get_parallel_dims(cart_str cart, int landscape);
+void initialize_cell_buffers(double **values, double **levels, dim_str dimensions, cart_str cart, int landscape, int rho, int seed);
 void update_neighbors(int i, int j, double **levels, slc_str slice);
 double laplacian(double **values, int i, int j, double dx, double dy);
 void initialize_dt(double *dt, double dx, double dy);
