@@ -4,9 +4,7 @@
 #include <mpi.h>
 
 #include "serlib.h"
-#include "args.h"
 #include "mem.h"
-#include "pgmio.h"
 #include "heat_solver.h"
 #include "misc.h"
 
@@ -16,21 +14,30 @@ void serial_initialise_buffers(master_str *master)
 	 * old and new image arrays to 255(white)
 	 * and setup fixed sawtooth boundaries to left and right
 	 */
-	  initialize_cell_buffers(&master->cell.buffers.global.values, &master->cell.buffers.global.levels, &master->slice.actual);
-      initialise_edges(&master->cell.buffers.global.values, &master->slice.halo)
+    master->slice = get_serial_dims();
+    master->cell.buffers = allocate_serial_buffers(master->slice);
+	initialize_cell_buffers(master->cell.buffers.global.values, master->cell.buffers.global.levels, master->slice.padded, master->cart);
+    copy_buff_to_local(master->cell.buffers.local.values, master->cell.buffers.local.levels, master->cell.buffers.global.values, master->cell.buffers.global.levels, master->slice);
+    initialise_edges(master->cell.buffers.local.values, master->cell.buffers.local.levels, master->slice.actual);
 
 }
 
 void serial_process(master_str *master)
 {
+    double dt = 0.25 * (1.0 / master->slice.actual.width * 1.0 / master->slice.actual.width + 1.0 / master->slice.actual.height * 1.0 / master->slice.actual.height);
 
-	 for (int step = 0; step < 1000; step++) {
+    for (int step = 0; step < 1000; step++) {
         
-        solve_heat_equation(&master->cell.buffers.local.values, dx, dy, dt, &master->slice);
+        solve_heat_equation(master->cell.buffers.local.values, 
+                            1.0 / master->slice.actual.width, 
+                            1.0 / master->slice.actual.height, 
+                            dt, master->slice);
 
         if (step % 10 == 0) {
-
-            refine_mesh(&master->cell.buffers.local.levels, &master->cell.buffers.local.values, dx, dy)
+            refine_mesh(master->cell.buffers.local.levels, 
+                        master->cell.buffers.local.values, 
+                        1.0 / master->slice.actual.width, 
+                        1.0 / master->slice.actual.height, master->slice, 3);
         }
     }
 }
@@ -39,9 +46,8 @@ void serial_process(master_str *master)
 void serial_write_data(master_str *master)
 {
 
-    copy_buff_to_mini(&master->cell.buffers.mini.values, &master->cell.buffers.local.values, &master->slice);
-    zerotmpcell(&master->cell.buffers.temp.values, &master->dimensions);
-    writecelldynamic("heat equation", &master->cell.buffers.global.values)
+    copy_buff_to_mini(master->cell.buffers.global.values, master->cell.buffers.local.values, master->slice);
+    writecelldynamic("heat equation", master->cell.buffers.global.values, 1152);
     
 }
 
