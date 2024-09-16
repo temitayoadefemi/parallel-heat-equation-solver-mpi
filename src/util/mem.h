@@ -17,8 +17,8 @@
 
 // Function prototypes
 double** allocate_2d_array(int rows, int cols);
-buf_str allocate_serial_buffers();
-buf_str allocate_parallel_buffers(comm_str comm, slc_str slice, master_str *master);
+buf_str allocate_serial_buffers(slc_str slice);
+buf_str allocate_parallel_buffers(slc_str slice, cart_str cart);
 void dealocate_buffers(buf_str *buffers);
 void handle_allocation_failure();
 
