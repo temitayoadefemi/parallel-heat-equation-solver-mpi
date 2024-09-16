@@ -128,6 +128,16 @@ void distribute_cells(double **local, double **global, cart_str cart, slc_str sl
     }
 }
 
+void distribute_to_temp(double **temp, double **mini, cart_str cart, slc_str slice) {
+    for (int i = 0; i < slice.actual.width; i++) {
+        for (int j = 0; j < slice.actual.height; j++) {
+            int global_row = cart.coords[0] * slice.actual.width + i;
+            int global_col = cart.coords[1] * slice.actual.height + j;
+            temp[global_row][global_col] = mini[i][j];
+        }
+    }
+}
+
 void zerotmpcell(double **values, double **levels, dim_str dimensions) {
     for (int i = 0; i < dimensions.width; i++) {
         for (int j = 0; j < dimensions.height; j++) {
