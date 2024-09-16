@@ -15,7 +15,7 @@ VPATH = $(SRC):$(addprefix $(SRC)/, mpi-lib heat-solver-lib util ser-lib par-lib
 INCLUDES = -Iinclude $(addprefix -I, $(subst :, ,$(VPATH)))
 
 # Source files and objects
-UTIL_SRCS = mem.c arralloc.c misc.c
+UTIL_SRCS = mem.c arralloc.c misc.c args.c
 AUTOMATON_SRCS = heat_solver.c
 MP_SRCS = mpilib.c
 VER_SRCS = serlib.c parlib.c wraplib.c
