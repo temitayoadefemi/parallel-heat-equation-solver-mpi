@@ -63,6 +63,7 @@ typedef struct parameters
 	  int maxstep;
 	  double r;
 	  version version;
+	  int maxlevel;
 } params_str;
 
 /* Contains the inforamtion about a neighbour */
