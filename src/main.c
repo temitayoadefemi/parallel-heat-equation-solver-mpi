@@ -11,6 +11,13 @@ int main(int argc, char **argv)
 
 	setup_comm(&master);
 
+    if (read_args(&master, argc, argv) == FAILED) {
+
+        mpstop(); // Stop the MPI environment
+
+        return 0;
+    }
+
 	setup_buffers(&master);
 
 	process(&master);
