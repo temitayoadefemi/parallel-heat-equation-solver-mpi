@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
  *	Global variables for rstart & uni
@@ -162,73 +163,39 @@ void rinit(int ijkl)
  *  writecelldynamic("cell.pbm", cell, L);
  */
 
-void writecelldynamic(char *cellfile, int **cell, int l)
+void writecelldynamic(char *filename, double **grid, int landscape_size)
 {
-  FILE *fp;
-
-  int i, j, npix, col;
-  static int pixperline = 32; // the PGM format limits to 70 characters per line
-
-  /*
-   *  Write the file
-   */
-
-  printf("writecelldynamic: opening file <%s>\n", cellfile);
-
-  fp = fopen(cellfile, "w");
-
-  printf("writecelldynamic: writing data ...\n");
-
-  /*
-   *  Start with the PBM header
-   */
-
-  fprintf(fp, "P1\n");
-  fprintf(fp, "# Written by writecelldynamic\n");
-  fprintf(fp, "%d %d\n", l, l) ;
-
-  /*
-   *  Now write the cells to file so that cell[0][0] is in the
-   *  bottom-left-hand corner and cell[l-1][l-1] is in the
-   *  top-right-hand corner
-   */
-
-  npix = 0;
-
-  for (j=l-1; j >= 0; j--)
-    {
-      for (i=0; i < l; i++)
-	{
-	  npix++;
-
-          // Strangely, PBM files have 1 for black and 0 for white
-          
-          col = 1;
-          if (cell[i][j] == 1) col = 0;
-
-	  // Make sure lines wrap after "npix" pixels
-
-	  if (npix == 1)
-	    {
-	      fprintf(fp, "%1d", col);
-	    }
-	  else if (npix < pixperline)
-	    {
-	      fprintf(fp, " %1d", col);
-	    }
-	  else
-	    {
-	      fprintf(fp, " %1d\n", col);
-	      npix = 0;
-	    }
-	}
+	 FILE *fp;
+    char full_filename[100];
+    
+    // Create the filename with ".pbm" extension
+    snprintf(full_filename, sizeof(full_filename), "%s.pbm", filename);
+    
+    // Open the file for writing
+    fp = fopen(full_filename, "w");
+    if (fp == NULL) {
+        printf("Error opening file %s\n", full_filename);
+        return;
     }
 
-  if (npix != 0) fprintf(fp, "\n");
+    // Write the PBM header
+    fprintf(fp, "P2\n");                         // PBM format
+    fprintf(fp, "%d %d\n", landscape_size, landscape_size);  // Image dimensions
+    fprintf(fp, "255\n");                        // Maximum grayscale value
 
-  printf("writecelldynamic: ... done\n");
+    // Write grid values
+    for (int j = 0; j < landscape_size; j++) {
+        for (int i = 0; i < landscape_size; i++) {
+            // Scale the grid value to a 0-255 range
+            int gray_value = (int)((grid[i][j] - 3.5) * 255 / 3.5);
+            // Clamp the value between 0 and 255
+            gray_value = (gray_value < 0) ? 0 : (gray_value > 255) ? 255 : gray_value;
+            fprintf(fp, "%d ", gray_value);
+        }
+        fprintf(fp, "\n");
+    }
 
-  fclose(fp);
-  printf("writecelldynamic: file closed\n");
+    fclose(fp);
+    printf("Saved grid state to %s\n", full_filename);
 }
 
