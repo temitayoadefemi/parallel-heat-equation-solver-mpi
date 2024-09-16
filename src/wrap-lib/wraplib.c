@@ -11,10 +11,7 @@
 
 void setup_comm(master_str *master)
 {
-	if(master->params.version == par2D)
-	{
 		par_initialise_comm(master);
-	}
 }
 
 
