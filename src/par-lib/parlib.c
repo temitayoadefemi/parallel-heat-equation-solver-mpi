@@ -52,24 +52,27 @@ void par_halo_exchange(master_str *master) {
 
 void par_process(master_str *master) {
 
-    double dt = 0.25 * (1.0 / master->slice.actual.width * 1.0 / master->slice.actual.width + 1.0 / master->slice.actual.height * 1.0 / master->slice.actual.height);
+    double dt = 0.25 * (1.0 / 576 * 1.0 / 576 + 1.0 / 576 * 1.0 / 576);
 
     for (int step = 0; step < 1000; step++) {
         
         solve_heat_equation(master->cell.buffers.local.values, 
-                            1.0 / master->slice.actual.width, 
-                            1.0 / master->slice.actual.height, 
+                            1.0 / 576, 
+                            1.0 / 576, 
                             dt, master->slice);
 
         if (step % 10 == 0) {
             refine_mesh(master->cell.buffers.local.levels, 
                         master->cell.buffers.local.values, 
-                        1.0 / master->slice.actual.width, 
-                        1.0 / master->slice.actual.height, master->slice, master->params.maxlevel);
+                        1.0 / 576, 
+                        1.0 / 576, master->slice, master->params.maxlevel);
         }
 
         par_halo_exchange(master);
+
     }
+
+
 
 }
 
@@ -78,7 +81,7 @@ void par_gather_write_data(master_str *master)
 {
     copy_buff_to_mini(master->cell.buffers.mini.values, master->cell.buffers.local.values, master->slice);
     zerotmpcell(master->cell.buffers.temp.values, master->cell.buffers.temp.levels , master->dimensions);
-    distribute_cells(master->cell.buffers.local.values, master->cell.buffers.global.values, master->cart, master->slice);
+    distribute_to_temp(master->cell.buffers.temp.values, master->cell.buffers.mini.values, master->cart, master->slice);
     mpireduce(master->cart, master->cell.buffers.temp.values, master->cell.buffers.global.values, master->slice.padded);
 
     if (master->comm.rank == 0) {
