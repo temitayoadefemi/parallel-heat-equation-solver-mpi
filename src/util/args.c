@@ -14,7 +14,7 @@ int read_parameters(master_str *master, int argc, char **argv) {
     if (argc < 2) {
         // Only the master node outputs the usage message
         if (master->comm.rank == 0) {
-            printf("Usage: automaton <seed> [-rho value] [-printfreq value] [-landscape value] [-maxstep value]\n");
+            printf("Usage: heat solver <seed> [-rho value] [-printfreq value] [-landscape value] [-maxstep value]\n");
         }
         return 1;  // Return 1 to indicate failure due to insufficient arguments
     }
@@ -43,6 +43,8 @@ int read_parameters(master_str *master, int argc, char **argv) {
             master->params.landscape = atoi(argv[++i]);  // Set landscape size
         } else if (strcmp(argv[i], "-maxstep") == 0 && i + 1 < argc) {
             master->params.maxstep = atoi(argv[++i]);  // Set maximum steps
+        } else if (strcmp(argv[i], "-maxlevel") == 0 && i + 1 < argc) {
+            master->params.maxlevel = atoi(argv[++i]);  // Set maximum steps
         }
     }
 
