@@ -19,5 +19,6 @@ void zerotmpcell(double **values, double **levels, dim_str dimensions);
 void copy_buff_to_mini(double **mini, double **local, slc_str slice);
 void initialise_edges(double **values, double **levels, dim_str slice);
 void copy_buff_to_local(double **mini_values, double **mini_levels, double **local_values, double **local_levels, slc_str slice);
+void distribute_to_temp(double **temp, double **mini, cart_str cart, slc_str slice);
 
 #endif // HEAT_SOLVER_H
