@@ -23,21 +23,30 @@ void serial_initialise_buffers(master_str *master)
 
 void serial_process(master_str *master)
 {
-    double dt = 0.25 * (1.0 / master->slice.actual.width * 1.0 / master->slice.actual.width + 1.0 / master->slice.actual.height * 1.0 / master->slice.actual.height);
+    double dt = 0.25 * (1.0 / 576 * 1.0 / 576 + 1.0 / 576 * 1.0 / 576);
 
     for (int step = 0; step < master->params.maxstep; step++) {
         
         solve_heat_equation(master->cell.buffers.local.values, 
-                            1.0 / master->slice.actual.width, 
-                            1.0 / master->slice.actual.height, 
+                            1.0 / 576, 
+                            1.0 / 576, 
                             dt, master->slice);
 
         if (step % 10 == 0) {
             refine_mesh(master->cell.buffers.local.levels, 
                         master->cell.buffers.local.values, 
-                        1.0 / master->slice.actual.width, 
-                        1.0 / master->slice.actual.height, master->slice, master->params.maxlevel);
+                        1.0 / 576, 
+                        1.0 / 576, master->slice, master->params.maxlevel);
         }
+    }
+
+        
+    printf("Values after initialization:\n");
+    for (int i = 0; i <= 1152; i++) {
+        for (int j = 0; j <= 1152; j++) {
+            printf("%6.2f ", master->cell.buffers.local.values[i][j]);
+        }
+        printf("\n");
     }
 }
 
